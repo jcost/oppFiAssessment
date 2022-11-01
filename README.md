@@ -14,3 +14,7 @@ To run this project:
   5. Expand tests and select "Run" icon for all tests or individual tests.
   
   6. View results in the Test Explorer and Test Detail Summary window.
+
+  OR
+  
+  1. Watch video in this repo where I do a screenshare and run the tests to show the tests working.
