@@ -43,11 +43,9 @@ namespace OppFiAssessment.ApiMethods
                 
                 var response = client.PostAsync(request).Result;
                 
-                System.Console.WriteLine("Test");
                 if (response.IsSuccessStatusCode)
                 {
                     responseJSON = (JObject)JToken.Parse(response.Content);
-                    System.Console.WriteLine("test");
                 }
 
             }

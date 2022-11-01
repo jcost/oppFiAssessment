@@ -21,31 +21,6 @@ namespace OppFiAssessment.Tests
             var acceptedOfferRequestFile = File.ReadAllText("RequestSchemas/acceptedOfferRequest.json");
             try
             {
-                JObject request = (JObject)JToken.Parse(acceptedOfferRequestFile);
-
-                //Variables used to validate correct request fields (formats etc.).
-                string socialSecurityNumber = request.SelectToken("socialSecurityNumber").ToString();
-                string leadOfferId = request.SelectToken("leadOfferId").ToString();
-                string email = request.SelectToken("email").ToString();
-                string stateCode = request.SelectToken("stateCode").ToString();
-                string grossMonthlyIncome = request.SelectToken("grossMonthlyIncome").ToString();
-                string requestedLoanAmount = request.SelectToken("requestedLoanAmount").ToString();       
-
-                //Validate correct request fields (formats etc.).
-                Assert.IsTrue(int.TryParse(socialSecurityNumber, out int ssn), "Social Security Number is not a number.");
-                Assert.IsTrue(socialSecurityNumber.Length == 9, "Social Security Number is not 9 digits long");
-                Assert.IsNotNull(leadOfferId, "Lead Offer Id is null");
-                Assert.IsTrue(api.IsEmailValid(email), "Email address given is not in email format.");
-                int.TryParse(stateCode, out int stateCodeIsNumber);
-
-                //If out variable is 0, then value is not a number.
-                Assert.AreEqual(0, stateCodeIsNumber, "State Code given is a number.");
-                
-                //Then ok to check if it's two character length.  If they mess up the state code to be "11" then no reason to check for two characters.
-                Assert.IsTrue(stateCode.Length == 2, "State code is not two characters long. ");
-                Assert.IsTrue(int.TryParse(grossMonthlyIncome,out int grossMonthly), "Gross Monthly Income is not a number.");
-                Assert.IsTrue(int.TryParse(requestedLoanAmount, out int requestedLoanAmt), "Gross Monthly Income is not a number.");
-
                 //Make request to Offer api!
                 JObject response = api.requestOffer(acceptedOfferRequestFile);
 
@@ -53,16 +28,16 @@ namespace OppFiAssessment.Tests
                 string accepted = response.GetValue("accepted").ToString();
                 string code = response.GetValue("code").ToString();
                 string status = response.GetValue("status").ToString();
-                int amount = Convert.ToInt32(response.SelectToken("offers[0].amount"));
-                double representativeAPR = Convert.ToDouble(response.SelectToken("offers[0].representativeAPR"));
-                int interestRate = Convert.ToInt32(response.SelectToken("offers[0].interestRate"));
-                int term = Convert.ToInt32(response.SelectToken("offers[0].term"));
-                int monthlyPayment =Convert.ToInt32(response.SelectToken("offers[0].monthlyPayment"));
+                int amount = Convert.ToInt32(response.SelectToken("offers[0].amount").ToString());
+                double representativeAPR = Convert.ToDouble(response.SelectToken("offers[0].representativeAPR").ToString());
+                int interestRate = Convert.ToInt32(response.SelectToken("offers[0].interestRate").ToString());
+                int term = Convert.ToInt32(response.SelectToken("offers[0].term").ToString());
+                int monthlyPayment =Convert.ToInt32(response.SelectToken("offers[0].monthlyPayment").ToString());
 
                 //Expected values (static values) are based on what I received from the API when testing this.
                 Assert.AreEqual("True", accepted, "accepted values did not match.");
                 Assert.AreEqual("201", code, "code values did not match.");
-                Assert.AreEqual("APPROVED", "APPROVED status was not reached.");
+                Assert.AreEqual("APPROVED", status, "APPROVED status was not reached.");
                 Assert.IsNotNull(response.GetValue("offers").ToString(), "No offers exist for this request.");
                 Assert.AreEqual(1400, amount, "Approved loan amount is not correct.");
                 Assert.AreEqual(159.99, representativeAPR, "Approved representative APR is not correct.");
@@ -83,42 +58,19 @@ namespace OppFiAssessment.Tests
             var declinedOfferRequestFile = File.ReadAllText("RequestSchemas/declinedOfferRequest.json");
             try
             {
-                JObject request = (JObject)JToken.Parse(declinedOfferRequestFile);
-
-                //Validate correct request fields (formats etc.).
-                string socialSecurityNumber = request.GetValue("socialSecurityNumber").ToString();
-                string leadOfferId = request.GetValue("leadOfferId").ToString();
-                string email = request.GetValue("email").ToString();
-                string stateCode = request.GetValue("stateCode").ToString();
-                string grossMonthlyIncome = request.GetValue("grossMonthlyIncome").ToString();
-                string requestedLoanAmount = request.GetValue("requestedLoanAmount").ToString();
-
-
-                Assert.IsTrue(int.TryParse(socialSecurityNumber, out int ssn), "Social Security Number is not a number.");
-                Assert.IsTrue(socialSecurityNumber.Length == 9, "Social Security Number is not 9 digits long");
-                Assert.IsNotNull(leadOfferId, "Lead Offer Id is null");
-                Assert.IsTrue(api.IsEmailValid(email), "Email address given is not in email format.");
-                int.TryParse(stateCode, out int stateCodeIsNumber);
-
-                //If out variable is 0, then value is not a number.
-                Assert.AreEqual(0, stateCodeIsNumber, "State Code given is a number.");
-
-                //Then ok to check if it's two character length.  If they mess up the state code to be "11" then no reason to check for two characters.
-                Assert.IsTrue(stateCode.Length == 2, "State code is not two characters long. ");
-                Assert.IsTrue(int.TryParse(grossMonthlyIncome, out int grossMonthly), "Gross Monthly Income is not a number.");
-                Assert.IsTrue(int.TryParse(requestedLoanAmount, out int requestedLoanAmt), "Gross Monthly Income is not a number.");
-
+                
                 //Expected values (static values) are based on what I received from the API when testing this.
                 JObject response = api.requestOffer(declinedOfferRequestFile);
-                Assert.AreEqual("False", response.GetValue("accepted").ToString());
-                Assert.AreEqual("315", response.GetValue("code").ToString());
-                Assert.AreEqual("DECLINED", response.GetValue("status").ToString());
-                Assert.IsNull(response.GetValue("offers").ToString(), "Offers exist for this request.");
+
+                Assert.AreEqual("False", response.GetValue("accepted").ToString(), "Accepted values do not match.");
+                Assert.AreEqual("315", response.GetValue("code").ToString(), "Response parameter code doesn't match expect code value.");
+                Assert.AreEqual("DECLINED", response.GetValue("status").ToString(), "Status does not equal Declined.");
+                Assert.IsNull(response.GetValue("offers"), "Offers exist for this request.");
             }
             catch (Exception e)
             {
                 Debug.WriteLine("error: " + e);
-                Assert.Fail();
+                Assert.Fail("Test failed one of the asserts or another error outside of the asserts.");
             }
         }
         [TestMethod]
@@ -128,20 +80,11 @@ namespace OppFiAssessment.Tests
             var noDecisionRequest = File.ReadAllText("RequestSchemas/noDecisionRequest.json");
             try
             {
-                //Validate correct request fields (formats etc.).
-                JObject request = (JObject)JToken.Parse(noDecisionRequest);
-                Assert.IsTrue(request.GetValue("socialSecurityNumber").ToString().Length == 9);
-                Assert.IsNotNull(request.GetValue("leadOfferId"));
-                Assert.IsTrue(api.IsEmailValid(request.GetValue("email").ToString()));
-                Assert.IsTrue(request.GetValue("stateCode").ToString().Length == 2);
-                Assert.IsTrue(int.TryParse(request.GetValue("grossMonthlyIncome").ToString(), out int grossMonthlyIncome));
-                Assert.IsTrue(int.TryParse(request.GetValue("requestedLoanAmount").ToString(), out int requestedLoanAmount));
-
                 //Expected values (static values) are based on what I received from the API when testing this.
                 JObject response = api.requestOffer(noDecisionRequest);
-                Assert.AreEqual("false", response.GetValue("accepted").ToString());
-                Assert.AreEqual(402, response.GetValue("code"));
-                Assert.AreEqual("DECLINED", response.GetValue("status").ToString());
+                Assert.AreEqual("False", response.GetValue("accepted").ToString(), "Accepted values do not match.");
+                Assert.AreEqual("402", response.GetValue("code").ToString(), "Response parameter code doesn't match expected code value.");
+                Assert.AreEqual("DECLINED", response.GetValue("status").ToString(), "Status does not equal DECLINED");
             }
             catch (Exception e)
             {

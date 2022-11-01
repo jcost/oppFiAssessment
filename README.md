@@ -2,6 +2,7 @@
 
 To run this project:
   1. Create config.json file at root of project.
+
   2. Put TARGET_URL and API_KEY into json file like this:
   
   { "TARGET_URL": "<url>", "API_KEY": "<apikeyValue> }
